@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -42,6 +46,9 @@ export class UsersService {
         id: id,
       },
     });
+    if (!user) {
+      throw new NotFoundException(`User with id = ${id} was not found`);
+    }
     delete user.hash;
     return user;
   }
@@ -58,8 +65,8 @@ export class UsersService {
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    const updatedUser = this.prisma.user.update({
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const updatedUser = await this.prisma.user.update({
       where: {
         id: id,
       },
@@ -67,14 +74,21 @@ export class UsersService {
         ...updateUserDto,
       },
     });
+    delete updatedUser.hash;
     return updatedUser;
   }
 
-  remove(id: number) {
-    return this.prisma.user.delete({
-      where: {
-        id: id,
-      },
-    });
+  async remove(id: number) {
+    const deleteUser = await this.prisma.user
+      .delete({
+        where: {
+          id: id,
+        },
+      })
+      .catch(() => {
+        throw new NotFoundException(`User with id = ${id} was not found`);
+      });
+    delete deleteUser.hash;
+    return deleteUser;
   }
 }

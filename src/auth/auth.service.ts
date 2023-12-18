@@ -14,8 +14,6 @@ export class AuthService {
     private prisma: PrismaService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {}
-
   async signin(dto: SignInDto) {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) {
